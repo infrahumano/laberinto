@@ -254,15 +254,6 @@ function distanceFromSolution(g, N, solution) {
 
 // ── Colour helpers ────────────────────────────────────────────────────────────
 
-function hexToRgb(hex) {
-  const v = parseInt(hex.replace('#', ''), 16);
-  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
-}
-
-function rgbToHex(r, g, b) {
-  return [r, g, b].map(v => v.toString(16).padStart(2, '0').toUpperCase()).join('');
-}
-
 const BG = [250, 248, 245];
 
 function fadeRgb([r, g, b], t) {
@@ -275,12 +266,6 @@ function fadeRgb([r, g, b], t) {
 
 // ── OXS export ────────────────────────────────────────────────────────────────
 
-function escapeXml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
 const N_SHADES = 4;
 
 function toOXS(g, N, solution, solDist, maxSolDist, opts = {}) {
@@ -292,45 +277,32 @@ function toOXS(g, N, solution, solDist, maxSolDist, opts = {}) {
   );
   const wallIdx = 1 + N_SHADES + 1;
 
-  const item = (idx, num, name, hex) =>
-    `    <palette_item index="${idx}" number="${num}" name="${name}" color="${hex}" printcolor="${hex}" blendcolor="nil" strands="2" bsstrands="2" bscolor="${hex}"/>`;
-
-  const L = [];
-  L.push('<?xml version="1.0" encoding="UTF-8"?>');
-  L.push('<chart>');
-  L.push(`  <properties oxsversion="1.0" software="maze-web" chartheight="${N}" chartwidth="${N}" charttitle="${escapeXml(title)}" palettecount="${wallIdx}"/>`);
-  L.push('  <palette>');
-  L.push(item(0, 'cloth', 'cloth', 'FFFFFF'));
-  L.push(item(1, 'Solution', 'Solution', solHex.toUpperCase()));
+  const palette = [
+    { index: 0, name: 'cloth', color: 'FFFFFF' },
+    { index: 1, number: 'Solution', name: 'Solution', color: solHex.toUpperCase(), strands: 2 },
+  ];
   for (let i = 0; i < N_SHADES; i++)
-    L.push(item(2 + i, `Shade ${i + 1}`, `Shade ${i + 1}`, shadeHexes[i]));
-  L.push(`    <palette_item index="${wallIdx}" number="Wall" name="Wall" color="${wallHex.toUpperCase()}" printcolor="${wallHex.toUpperCase()}" blendcolor="nil" strands="1" bsstrands="1" bscolor="${wallHex.toUpperCase()}"/>`);
-  L.push('  </palette>');
+    palette.push({ index: 2 + i, number: `Shade ${i + 1}`, name: `Shade ${i + 1}`, color: shadeHexes[i], strands: 2 });
+  palette.push({ index: wallIdx, number: 'Wall', name: 'Wall', color: wallHex.toUpperCase(), strands: 1 });
 
-  L.push('  <fullstitches>');
+  const stitches = [];
   for (let r = 0; r < N; r++)
     for (let c = 0; c < N; c++) {
-      let palIdx;
-      if (solution[r][c]) {
-        palIdx = 1;
-      } else {
-        const t = maxSolDist > 0 ? solDist[r][c] / maxSolDist : 0;
-        palIdx = 2 + Math.min(N_SHADES - 1, Math.floor(t * N_SHADES));
-      }
-      L.push(`    <stitch x="${c}" y="${r}" palindex="${palIdx}"/>`);
+      const palindex = solution[r][c]
+        ? 1
+        : 2 + Math.min(N_SHADES - 1, Math.floor((maxSolDist > 0 ? solDist[r][c] / maxSolDist : 0) * N_SHADES));
+      stitches.push({ x: c, y: r, palindex });
     }
-  L.push('  </fullstitches>');
 
-  L.push('  <backstitches>');
+  const backstitches = [];
   for (let r = 0; r <= N; r++)
     for (let c = 0; c < N; c++)
       if (r === 0 || r === N || !(g[r - 1][c] & DIR_S))
-        L.push(`    <backstitch x1="${c}" y1="${r}" x2="${c + 1}" y2="${r}" palindex="${wallIdx}" objecttype="backstitch"/>`);
+        backstitches.push({ x1: c, y1: r, x2: c + 1, y2: r, palindex: wallIdx });
   for (let c = 0; c <= N; c++)
     for (let r = 0; r < N; r++)
       if (c === 0 || c === N || !(g[r][c - 1] & DIR_E))
-        L.push(`    <backstitch x1="${c}" y1="${r}" x2="${c}" y2="${r + 1}" palindex="${wallIdx}" objecttype="backstitch"/>`);
-  L.push('  </backstitches>');
-  L.push('</chart>');
-  return L.join('\n');
+        backstitches.push({ x1: c, y1: r, x2: c, y2: r + 1, palindex: wallIdx });
+
+  return buildOXS({ width: N, height: N, title, software: 'laberinto', palette, stitches, backstitches });
 }
