@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="dedication" content="this is also for sarah warren">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>laberinto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    h1 { font-family: 'Playfair Display', Georgia, serif; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>laberinto</h1>
+    <div class="controls">
+      <div class="field">
+        <label for="size">size</label>
+        <input id="size" type="number" min="5" max="60" value="20">
+      </div>
+      <div class="field">
+        <label for="algorithm">style</label>
+        <select id="algorithm">
+          <option value="dfs">winding</option>
+          <option value="prim">branchy</option>
+          <option value="wilson">uniform</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>path</label>
+        <div class="swatch" id="swatch-sol"></div>
+        <input id="colour-sol" type="color" class="colour-input">
+      </div>
+      <div class="field">
+        <label>fill</label>
+        <div class="swatch" id="swatch-fill"></div>
+        <input id="colour-fill" type="color" class="colour-input">
+      </div>
+      <button id="btn-randomise">randomise</button>
+      <button id="btn-download">download oxs</button>
+      <button id="btn-png">download png</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
+    <p id="stats"></p>
+  </main>
+
+  <footer>this is also for sarah warren</footer>
+
+  <script src="laberinto.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
